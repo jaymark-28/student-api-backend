@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Academic Lab Attendance</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg:#ece9e1;
+    --surface:#fff;
+    --soft:#f4f1ea;
+    --ink:#1c1c1c;
+    --muted:#5c5c5c;
+    --line:#cfc8bb;
+    --brown:#1f3d5a;
+    --brown-soft:#3d5a73;
+    --green:#2f6b45;
+    --orange:#b56a1a;
+    --red:#a33b2b;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+    --rule:#1f3d5a;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font:15px/1.45 var(--sans);
+  }
+  svg.i { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  .wrap { max-width:1100px; margin:0 auto; padding:0 22px; }
+  nav {
+    background:#f8f5ef;
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap { height:56px; display:flex; align-items:center; justify-content:space-between; }
+  .brand {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font:600 13px var(--sans);
+    letter-spacing:.02em;
+    color:var(--ink);
+  }
+  .logo {
+    width:26px;
+    height:26px;
+    border:1px solid var(--rule);
+    background:var(--surface);
+    color:var(--rule);
+    display:grid;
+    place-items:center;
+  }
+  .conn {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .dot { width:8px; height:8px; border-radius:50%; background:#b8b3a8; }
+  .conn.ok .dot { background:var(--green); }
+  .conn.err .dot { background:var(--red); }
+  main.wrap { padding:28px 22px 80px; }
+  .hero {
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px 24px;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:22px;
+    padding-bottom:14px;
+    border-bottom:2px solid var(--rule);
+  }
+  .heroText { align-self:flex-end; }
+  .side { display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; gap:18px; }
+  .eyebrow {
+    margin:0 0 4px;
+    font:600 11px var(--sans);
+    color:var(--brown-soft);
+  }
+  h1 {
+    margin:0 0 4px;
+    font:700 1.7rem/1.15 var(--serif);
+  }
+  .sub { margin:0; color:var(--muted); font-size:14px; max-width:42em; }
+  .btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    height:34px;
+    padding:0 14px;
+    border:1px solid var(--rule);
+    background:var(--rule);
+    color:#fff;
+    font:600 13px var(--sans);
+    cursor:pointer;
+  }
+  .btn:hover { background:#162e44; }
+  .btn.ghost { background:var(--surface); color:var(--ink); border-color:var(--line); }
+  .btn.ghost:hover { background:var(--soft); }
+  .btn:disabled { opacity:.6; cursor:default; }
+  :is(.btn,input,select,th button):focus-visible { outline:2px solid var(--brown-soft); outline-offset:2px; }
+  .stats {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:0;
+    margin-bottom:18px;
+    background:var(--surface);
+    border:1px solid var(--line);
+  }
+  .stat {
+    padding:12px 16px 14px;
+    border-right:1px solid var(--line);
+    background:transparent;
+  }
+  .stat:last-child { border-right:0; }
+  .stat .row { display:flex; justify-content:space-between; align-items:center; }
+  .stat small {
+    font:600 11px var(--sans);
+    color:var(--muted);
+    text-transform:none;
+    letter-spacing:0;
+  }
+  .ib { display:none; }
+  .stat .val { display:flex; align-items:baseline; gap:8px; margin:6px 0 8px; }
+  .stat b { font:700 1.65rem/1 var(--sans); letter-spacing:-.02em; }
+  .chip {
+    font:12px var(--sans);
+    color:var(--muted);
+    background:none;
+    border:0;
+    padding:0;
+  }
+  .track { height:2px; background:#e4dfd4; overflow:hidden; }
+  .track i { display:block; height:100%; width:0; }
+  .card {
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:0;
+  }
+  .tools {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 10px;
+    align-items:center;
+    padding:10px 12px;
+    margin-bottom:0;
+    border-bottom:0;
+  }
+  .search { position:relative; flex:1 1 220px; max-width:280px; }
+  .search svg { position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--muted); width:14px; height:14px; }
+  input, select {
+    height:34px;
+    border:1px solid #bdb6a8;
+    border-radius:0;
+    background:#fff;
+    color:var(--ink);
+    font:13px var(--sans);
+    padding:0 10px;
+  }
+  .search input { width:100%; padding-left:30px; }
+  .grow { flex:1; }
+  .count { font:12px var(--sans); color:var(--muted); }
+  .count b { color:var(--ink); font-weight:700; }
+  .panel { overflow:hidden; background:var(--surface); border-top:0; }
+  .scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:9px 12px; }
+  thead th {
+    background:#f1eee6;
+    border-bottom:1px solid var(--line);
+    border-top:1px solid var(--line);
+    font:600 11px var(--sans);
+    color:#334155;
+    white-space:nowrap;
+    letter-spacing:.01em;
+    text-transform:none;
+  }
+  th button { all:unset; cursor:pointer; display:inline-flex; flex-direction:column; gap:1px; }
+  th.c { text-align:center; } th.c button { align-items:center; }
+  th button:hover { color:var(--ink); }
+  th .s { font:400 10px var(--sans); letter-spacing:0; text-transform:none; color:var(--muted); }
+  .arrow { font-size:9px; margin-left:4px; }
+  tbody td { border-bottom:1px solid #ece7dc; vertical-align:middle; }
+  tbody tr:nth-child(even) { background:#faf8f3; }
+  tbody tr:last-child td { border-bottom:0; }
+  tbody tr:hover { background:#fff7e6; }
+  td.primary { font-weight:600; }
+  td.c { text-align:center; }
+  .tag {
+    display:inline-block;
+    font:12px var(--sans);
+    border:1px solid var(--line);
+    background:#fff;
+    padding:1px 6px;
+  }
+  .pill {
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:0;
+    border:0;
+    background:none;
+    font-size:12px;
+    font-weight:600;
+  }
+  .pill i { width:6px; height:6px; border-radius:50%; }
+  .pill.ok { color:var(--green); } .pill.ok i { background:var(--green); }
+  .pill.no { color:var(--red); } .pill.no i { background:var(--red); }
+  .dim { color:#c5bfb3; }
+  .rate { display:flex; align-items:center; gap:8px; font:600 12px var(--sans); min-width:108px; }
+  .rate .track { width:56px; height:4px; }
+  .state { padding:48px 20px; text-align:center; color:var(--muted); }
+  .state strong { display:block; color:var(--ink); font:700 1.15rem var(--sans); margin-bottom:6px; }
+  .state .btn { margin-top:16px; }
+  .skel { padding:18px; display:grid; gap:10px; }
+  .skel i { height:12px; background:#e4dfd4; }
+  @keyframes sh { to { background-position:-200% 0; } }
+  .formpanel { margin:0 0 18px; padding:16px 18px 18px; }
+  .formpanel[hidden] { display:none; }
+  .formpanel h2 { font:700 1.1rem var(--sans); margin:0 0 14px; }
+  .fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .fields label {
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    font:600 11px var(--sans);
+    letter-spacing:0;
+    text-transform:none;
+    color:var(--muted);
+  }
+  .fields input, .fields select { height:36px; background:var(--surface); }
+  .actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; }
+  .msg { font-size:13px; color:var(--muted); } .msg.err { color:var(--red); }
+  .toast {
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    left:auto;
+    transform:none;
+    background:#1c1c1c;
+    color:#fff;
+    padding:10px 14px;
+    font:500 13px var(--sans);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s;
+    max-width:90vw;
+  }
+  .toast.show { opacity:1; transform:none; }
+  .toast.err { background:var(--red); }
+  @media (prefers-reduced-motion: reduce) { .skel i, .toast, .track i { animation:none; transition:none; } }
+  @media (max-width:900px) {
+    .stats { grid-template-columns:1fr 1fr; }
+    .stat:nth-child(2) { border-right:0; }
+    .stat:nth-child(1), .stat:nth-child(2) { border-bottom:1px solid var(--line); }
+  }
+  @media (max-width:700px) {
+    .search { max-width:none; }
+    .stats { grid-template-columns:1fr; }
+    .stat { border-right:0; border-bottom:1px solid var(--line); }
+    .stat:last-child { border-bottom:0; }
+    thead { display:none; }
+    table, tbody, tr, td { display:block; width:100%; }
+    tbody tr { padding:12px 14px; border-bottom:1px solid var(--line); }
+    tbody tr:nth-child(even) { background:#fff; }
+    tbody tr:last-child { border-bottom:0; }
+    tbody td { border-bottom:0; padding:4px 0; display:flex; gap:12px; justify-content:space-between; align-items:center; text-align:right; }
+    td::before { content:attr(data-label); font:600 11px var(--sans); color:var(--muted); flex:none; }
+    td.primary { text-align:left; }
+  }
+  .mini { border:1px solid var(--line); background:var(--surface); color:var(--ink); font:600 11px var(--mono); letter-spacing:.06em;
+    text-transform:uppercase; padding:5px 10px; border-radius:0; cursor:pointer; }
+  .mini:hover { background:var(--soft); }
+  .mini.danger { color:var(--red); }
+  .mini.danger:hover { background:color-mix(in srgb, var(--red) 12%, var(--surface)); border-color:var(--red); }
+  .mini:focus-visible { outline:2px solid var(--brown-soft); outline-offset:2px; }
+  td.act { white-space:nowrap; text-align:center; }
+  .acts { display:inline-flex; gap:6px; }
+  .eh { font:500 11px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--brown-soft); margin:20px 0 8px; }
+  .erow { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; margin-bottom:8px; max-width:520px; }
+  @media (max-width:700px) { td.act { text-align:right; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg></span>
+      Academic Lab Attendance
+    </div>
+    <span class="conn" id="conn"><span class="dot"></span><span id="connText">Connecting…</span></span>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="hero">
+    <div class="heroText">
+      <p class="eyebrow">Class database · live sync</p>
+      <h1>Lab Attendance</h1>
+      <p class="sub">Daily attendance for every lab session, pulled live from the class database.</p>
+    </div>
+    <button class="btn" id="toggleForm" type="button">
+      <svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add record
+    </button>
+  </header>
+
+  <form class="card formpanel" id="addForm" hidden>
+    <h2>Add attendance</h2>
+    <div class="fields" id="fields"></div>
+    <div class="actions">
+      <button class="btn" type="submit" id="saveBtn">Save record</button>
+      <button class="btn ghost" type="button" id="cancelForm">Close</button>
+      <span class="msg" id="msg" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <form class="card formpanel" id="editForm" hidden>
+    <h2 id="eTitle">Edit record</h2>
+    <div class="fields" id="eFields"></div>
+    <p class="eh">Attendance dates</p>
+    <div id="eEntries"></div>
+    <button class="btn ghost" type="button" id="eAddRow">+ Add date</button>
+    <div class="fields" style="margin-top:18px">
+      <label><span>Passcode</span><input type="password" id="ePass" required autocomplete="off"></label>
+    </div>
+    <div class="actions">
+      <button class="btn" type="submit" id="eSave">Save changes</button>
+      <button class="btn ghost" type="button" id="eCancel">Cancel</button>
+      <span class="msg" id="eMsg" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat">
+      <div class="row"><small>Total students</small><span class="ib"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3-5.5 6.5-5.5s6 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .6 3.3 2.4 3.5 5.2"/></svg></span></div>
+      <div class="val"><b id="sStudents">–</b><span class="chip">On roster</span></div>
+      <div class="track"><i id="bStudents" style="background:var(--brown-soft)"></i></div>
+    </div>
+    <div class="stat">
+      <div class="row"><small>Lab sessions</small><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4a1.5 1.5 0 0 0 1.3-2.2L14 9V3M7.5 15h9"/></svg></span></div>
+      <div class="val"><b id="sSessions">–</b><span class="chip" id="cSessions">–</span></div>
+      <div class="track"><i id="bSessions" style="background:var(--brown-soft)"></i></div>
+    </div>
+    <div class="stat">
+      <div class="row"><small>Attendance rate</small><span class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg></span></div>
+      <div class="val"><b id="sRate">–</b><span class="chip" id="cRate">–</span></div>
+      <div class="track"><i id="bRate" style="background:var(--green)"></i></div>
+    </div>
+    <div class="stat">
+      <div class="row"><small>Absences</small><span class="ib" style="color:var(--red)"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3-5.5 6.5-5.5s5 1.2 6 3.5M17 9l5 5M22 9l-5 5"/></svg></span></div>
+      <div class="val"><b id="sAbsent">–</b><span class="chip">Logged</span></div>
+      <div class="track"><i id="bAbsent" style="background:var(--red)"></i></div>
+    </div>
+  </section>
+
+  <div class="card tools">
+    <label class="search">
+      <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search students…" autocomplete="off" aria-label="Search records">
+    </label>
+    <select id="fSubject" aria-label="Filter by subject" hidden></select>
+    <select id="fSection" aria-label="Filter by section" hidden></select>
+    <span class="grow"></span>
+    <span class="count" id="count" aria-live="polite"></span>
+    <button class="btn ghost" id="exportBtn" type="button">
+      <svg class="i" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>Export CSV
+    </button>
+  </div>
+
+  <div class="card panel"><div class="scroll" id="view"></div></div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+  // Palitan kung magbago ang Vercel domain mo (may /api sa dulo)
+  const VERCEL_API_URL = 'https://student-api-backend-indol.vercel.app/api';
+
+  const $ = id => document.getElementById(id);
+  const view = $('view'), searchEl = $('q'), subjEl = $('fSubject'), sectEl = $('fSection'), countEl = $('count');
+  const addForm = $('addForm'), msgEl = $('msg');
+  const editForm = $('editForm'), eMsg = $('eMsg');
+  let editId = null;
+
+  let rows = [], infoCols = [], dates = [], attKey = null, shown = [];
+  let keys = { student: null, subject: null, section: null };
+  let sortKey = null, sortDir = 1;
+
+  const day = v => String(v).slice(0, 10);
+  const isPresent = s => /present/i.test(String(s));
+  const getAtt = r => (attKey && Array.isArray(r[attKey])) ? r[attKey] : [];
+  const statusOn = (r, d) => { const e = getAtt(r).find(x => day(x.date) === d); return e ? String(e.status) : ''; };
+  const presentCount = r => getAtt(r).filter(x => isPresent(x.status)).length;
+  const rateOf = r => { const n = getAtt(r).length; return n ? Math.round(presentCount(r) / n * 100) : 0; };
+
+  function pretty(key) {
+    const s = key.replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').trim().toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function shortDate(d) {
+    const t = new Date(d + 'T00:00:00Z');
+    return isNaN(t) ? d : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  }
+  function valueOf(r, key) {
+    if (key === '__rate') return rateOf(r);
+    if (key.startsWith('d:')) return statusOn(r, key.slice(2));
+    return r[key] ?? '';
+  }
+
+  function setConn(state) {
+    const el = $('conn');
+    el.className = 'conn ' + state;
+    $('connText').textContent = state === 'ok' ? 'Database connected' : state === 'err' ? 'Connection failed' : 'Connecting…';
+  }
+
+  let tt;
+  function toast(text, kind) {
+    const t = $('toast');
+    t.textContent = text;
+    t.className = 'toast show ' + (kind || '');
+    clearTimeout(tt);
+    tt = setTimeout(() => { t.className = 'toast'; }, 3500);
+  }
+
+  function showSkeleton() { view.innerHTML = '<div class="skel"><i></i><i></i><i></i><i></i><i></i></div>'; }
+  function showState(title, text, retry) {
+    view.innerHTML = '';
+    const d = document.createElement('div');
+    d.className = 'state';
+    const s = document.createElement('strong');
+    s.textContent = title;
+    d.appendChild(s);
+    d.appendChild(document.createTextNode(text));
+    if (retry) {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.type = 'button';
+      b.textContent = 'Try again';
+      b.addEventListener('click', () => { showSkeleton(); setConn('loading'); load(); });
+      d.appendChild(document.createElement('br'));
+      d.appendChild(b);
+    }
+    view.appendChild(d);
+  }
+
+  function updateStats(list) {
+    let entries = 0, present = 0;
+    list.forEach(r => { entries += getAtt(r).length; present += presentCount(r); });
+    const absent = entries - present;
+    const today = new Date().toISOString().slice(0, 10);
+    const done = dates.filter(d => d <= today).length;
+    const pct = entries ? Math.round(present / entries * 100) : 0;
+
+    $('sStudents').textContent = list.length;
+    $('sSessions').textContent = dates.length;
+    $('sRate').innerHTML = entries ? pct + '<span style="font-size:1.1rem;color:var(--muted)">%</span>' : '–';
+    $('sAbsent').textContent = absent;
+    $('cSessions').textContent = done + ' completed';
+    $('cRate').textContent = entries ? present + ' of ' + entries + ' present' : 'No data';
+
+    $('bStudents').style.width = rows.length ? (list.length / rows.length * 100) + '%' : '0%';
+    $('bSessions').style.width = dates.length ? (done / dates.length * 100) + '%' : '0%';
+    $('bRate').style.width = pct + '%';
+    $('bAbsent').style.width = entries ? (absent / entries * 100) + '%' : '0%';
+  }
+
+  function getColumns() {
+    const cols = infoCols.map(c => ({ key: c, label: pretty(c) }));
+    dates.forEach((d, i) => cols.push({ key: 'd:' + d, label: shortDate(d), sub: 'session ' + String(i + 1).padStart(2, '0'), center: true }));
+    if (attKey) cols.push({ key: '__rate', label: 'Attendance' });
+    cols.push({ key: '__act', label: 'Action' });
+    return cols;
+  }
+
+  function render() {
+    const term = searchEl.value.trim().toLowerCase();
+    const sub = subjEl.value, sec = sectEl.value;
+    let list = rows.filter(r =>
+      (!term || infoCols.some(c => String(r[c] ?? '').toLowerCase().includes(term))) &&
+      (!sub || r[keys.subject] === sub) && (!sec || r[keys.section] === sec));
+
+    if (sortKey) {
+      list = list.slice().sort((a, b) =>
+        String(valueOf(a, sortKey)).localeCompare(String(valueOf(b, sortKey)), undefined, { numeric: true }) * sortDir);
+    }
+    shown = list;
+    countEl.innerHTML = 'Showing <b>' + list.length + '</b> of ' + rows.length + ' students';
+    updateStats(list);
+
+    if (!list.length) { showState('Nothing here', 'No records match your search or filter.'); return; }
+
+    const cols = getColumns();
+    const table = document.createElement('table');
+    const head = table.createTHead().insertRow();
+    cols.forEach(c => {
+      const th = document.createElement('th');
+      th.scope = 'col';
+      if (c.key === '__act') { th.className = 'c'; th.textContent = c.label; head.appendChild(th); return; }
+      if (c.center) th.className = 'c';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      const lab = document.createElement('span');
+      lab.textContent = c.label;
+      if (sortKey === c.key) {
+        const a = document.createElement('span');
+        a.className = 'arrow';
+        a.textContent = sortDir === 1 ? '▲' : '▼';
+        lab.appendChild(a);
+      }
+      btn.appendChild(lab);
+      if (c.sub) {
+        const s = document.createElement('span');
+        s.className = 's';
+        s.textContent = c.sub;
+        btn.appendChild(s);
+      }
+      btn.addEventListener('click', () => { sortDir = sortKey === c.key ? -sortDir : 1; sortKey = c.key; render(); });
+      th.appendChild(btn);
+      head.appendChild(th);
+    });
+
+    const body = table.createTBody();
+    list.forEach(r => {
+      const tr = body.insertRow();
+      cols.forEach(c => {
+        const td = tr.insertCell();
+        td.dataset.label = c.label;
+        if (c.key === '__act') {
+          td.className = 'act';
+          const box = document.createElement('div');
+          box.className = 'acts';
+          const nm = (keys.student && r[keys.student]) || 'record';
+          const eb = document.createElement('button');
+          eb.type = 'button';
+          eb.className = 'mini';
+          eb.textContent = 'Edit';
+          eb.setAttribute('aria-label', 'Edit ' + nm);
+          eb.addEventListener('click', () => openEdit(r));
+          const db = document.createElement('button');
+          db.type = 'button';
+          db.className = 'mini danger';
+          db.textContent = 'Delete';
+          db.setAttribute('aria-label', 'Delete ' + nm);
+          db.addEventListener('click', () => deleteRecord(r));
+          box.appendChild(eb);
+          box.appendChild(db);
+          td.appendChild(box);
+        } else if (c.key === '__rate') {
+          const pct = rateOf(r);
+          const wrap = document.createElement('div');
+          wrap.className = 'rate';
+          wrap.appendChild(document.createTextNode(pct + '%'));
+          const track = document.createElement('div');
+          track.className = 'track';
+          const fill = document.createElement('i');
+          fill.style.width = pct + '%';
+          fill.style.background = pct >= 90 ? 'var(--green)' : pct >= 60 ? 'var(--orange)' : 'var(--red)';
+          track.appendChild(fill);
+          wrap.appendChild(track);
+          td.appendChild(wrap);
+        } else if (c.key.startsWith('d:')) {
+          td.className = 'c';
+          const st = statusOn(r, c.key.slice(2));
+          if (!st) { td.innerHTML = '<span class="dim">—</span>'; }
+          else {
+            const p = document.createElement('span');
+            p.className = 'pill ' + (isPresent(st) ? 'ok' : 'no');
+            p.innerHTML = '<i></i>';
+            p.appendChild(document.createTextNode(st));
+            td.appendChild(p);
+          }
+        } else if (c.key === keys.section) {
+          const t = document.createElement('span');
+          t.className = 'tag';
+          t.textContent = r[c.key] ?? '—';
+          td.appendChild(t);
+        } else {
+          td.textContent = r[c.key] ?? '—';
+          if (c.key === keys.student) td.className = 'primary';
+        }
+      });
+    });
+    view.innerHTML = '';
+    view.appendChild(table);
+  }
+
+  function fillFilter(sel, key, allLabel) {
+    if (!key) { sel.hidden = true; return; }
+    const keep = sel.value;
+    sel.innerHTML = '';
+    const all = document.createElement('option');
+    all.value = '';
+    all.textContent = allLabel;
+    sel.appendChild(all);
+    Array.from(new Set(rows.map(r => r[key]).filter(Boolean))).sort().forEach(v => {
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = v;
+      sel.appendChild(o);
+    });
+    sel.value = Array.from(sel.options).some(o => o.value === keep) ? keep : '';
+    sel.hidden = false;
+  }
+
+  function exportCsv() {
+    const cols = getColumns().filter(c => c.key !== '__rate' && c.key !== '__act');
+    const esc = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const lines = [cols.map(c => esc(c.label)).concat(esc('Attendance %')).join(',')];
+    shown.forEach(r => lines.push(cols.map(c => esc(valueOf(r, c.key))).concat(rateOf(r)).join(',')));
+    const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'lab-attendance.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  /* ---------- Add record form ---------- */
+  function setMsg(text, err) { msgEl.textContent = text; msgEl.className = 'msg' + (err ? ' err' : ''); }
+
+  function buildForm() {
+    const box = $('fields');
+    box.innerHTML = '';
+    const add = (label, input, extra) => {
+      const l = document.createElement('label');
+      const t = document.createElement('span');
+      t.textContent = label;
+      l.appendChild(t);
+      l.appendChild(input);
+      if (extra) l.appendChild(extra);
+      box.appendChild(l);
+    };
+    infoCols.forEach(c => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.name = 'f_' + c;
+      input.required = true;
+      input.autocomplete = 'off';
+      input.maxLength = 100;
+      const dl = document.createElement('datalist');
+      dl.id = 'dl_' + c;
+      Array.from(new Set(rows.map(r => r[c]).filter(Boolean))).sort().forEach(v => {
+        const o = document.createElement('option');
+        o.value = v;
+        dl.appendChild(o);
+      });
+      input.setAttribute('list', dl.id);
+      if (c === keys.student) {
+        input.addEventListener('change', () => {
+          const found = rows.find(r => r[c] === input.value.trim());
+          if (!found) return;
+          infoCols.forEach(o => { if (o !== c) addForm.elements['f_' + o].value = found[o] ?? ''; });
+        });
+      }
+      add(pretty(c), input, dl);
+    });
+    const date = document.createElement('input');
+    date.type = 'date';
+    date.name = 'date';
+    date.required = true;
+    date.value = new Date().toISOString().slice(0, 10);
+    add('Date', date);
+    const status = document.createElement('select');
+    status.name = 'status';
+    ['Present', 'Absent'].forEach(v => {
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = v;
+      status.appendChild(o);
+    });
+    add('Status', status);
+    const pass = document.createElement('input');
+    pass.type = 'password';
+    pass.name = 'passcode';
+    pass.required = true;
+    pass.autocomplete = 'off';
+    add('Passcode', pass);
+  }
+
+  $('toggleForm').addEventListener('click', () => {
+    addForm.hidden = !addForm.hidden;
+    editForm.hidden = true;
+    if (!addForm.hidden) { setMsg(''); const f = addForm.querySelector('input'); if (f) f.focus(); }
+  });
+  $('cancelForm').addEventListener('click', () => { addForm.hidden = true; });
+
+  addForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const match = {};
+    infoCols.forEach(c => { match[c] = addForm.elements['f_' + c].value.trim(); });
+    const btn = $('saveBtn');
+    btn.disabled = true;
+    setMsg('Saving…');
+    try {
+      const res = await fetch(VERCEL_API_URL + '/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': addForm.elements.passcode.value },
+        body: JSON.stringify({
+          match, attKey: attKey || 'attendance',
+          date: addForm.elements.date.value, status: addForm.elements.status.value
+        })
+      });
+      if (res.status === 401) { setMsg('Wrong passcode. Try again.', true); return; }
+      if (!res.ok) { setMsg('Could not save. Check the fields and try again.', true); return; }
+      const out = await res.json();
+      await load();
+      setMsg('');
+      toast(out.updated ? 'Attendance updated' : 'Record saved');
+    } catch (err) {
+      setMsg('Could not reach the server. Check your connection.', true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- Edit & Delete ---------- */
+  function setEMsg(text, err) { eMsg.textContent = text; eMsg.className = 'msg' + (err ? ' err' : ''); }
+
+  function entryRow(date, status) {
+    const row = document.createElement('div');
+    row.className = 'erow';
+    const d = document.createElement('input');
+    d.type = 'date';
+    d.className = 'e-date';
+    d.required = true;
+    d.value = date || '';
+    const s = document.createElement('select');
+    s.className = 'e-status';
+    ['Present', 'Absent'].forEach(v => {
+      const o = document.createElement('option');
+      o.value = v;
+      o.textContent = v;
+      s.appendChild(o);
+    });
+    s.value = status || 'Present';
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'mini danger';
+    x.textContent = 'Remove';
+    x.addEventListener('click', () => row.remove());
+    row.appendChild(d);
+    row.appendChild(s);
+    row.appendChild(x);
+    return row;
+  }
+
+  function openEdit(r) {
+    editId = r._id;
+    const box = $('eFields');
+    box.innerHTML = '';
+    infoCols.forEach(c => {
+      const l = document.createElement('label');
+      const t = document.createElement('span');
+      t.textContent = pretty(c);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.name = 'e_' + c;
+      input.required = true;
+      input.maxLength = 100;
+      input.value = r[c] ?? '';
+      l.appendChild(t);
+      l.appendChild(input);
+      box.appendChild(l);
+    });
+    const list = $('eEntries');
+    list.innerHTML = '';
+    getAtt(r).slice().sort((a, b) => day(a.date).localeCompare(day(b.date))).forEach(x => {
+      list.appendChild(entryRow(day(x.date), isPresent(x.status) ? 'Present' : 'Absent'));
+    });
+    $('ePass').value = '';
+    $('eTitle').textContent = 'Edit record' + (keys.student && r[keys.student] ? ' · ' + r[keys.student] : '');
+    addForm.hidden = true;
+    setEMsg('');
+    editForm.hidden = false;
+    editForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('eAddRow').addEventListener('click', () => {
+    $('eEntries').appendChild(entryRow(new Date().toISOString().slice(0, 10), 'Present'));
+  });
+  $('eCancel').addEventListener('click', () => { editForm.hidden = true; });
+
+  editForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fields = {};
+    infoCols.forEach(c => { fields[c] = editForm.elements['e_' + c].value.trim(); });
+    const attendance = [];
+    const seen = new Set();
+    let dup = false;
+    document.querySelectorAll('#eEntries .erow').forEach(row => {
+      const d = row.querySelector('.e-date').value;
+      if (!d) return;
+      if (seen.has(d)) dup = true;
+      seen.add(d);
+      attendance.push({ date: d, status: row.querySelector('.e-status').value });
+    });
+    if (dup) { setEMsg('Two entries have the same date.', true); return; }
+
+    const btn = $('eSave');
+    btn.disabled = true;
+    setEMsg('Saving…');
+    try {
+      const res = await fetch(VERCEL_API_URL + '/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': $('ePass').value },
+        body: JSON.stringify({ id: editId, fields, attKey: attKey || 'attendance', attendance })
+      });
+      if (res.status === 401) { setEMsg('Wrong passcode. Try again.', true); return; }
+      if (res.status === 404) { setEMsg('Record not found. Refresh the page.', true); return; }
+      if (!res.ok) { setEMsg('Could not save. Check the fields and try again.', true); return; }
+      await load();
+      editForm.hidden = true;
+      toast('Record updated');
+    } catch (err) {
+      setEMsg('Could not reach the server. Check your connection.', true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  async function deleteRecord(r) {
+    const name = (keys.student && r[keys.student]) || 'this record';
+    if (!confirm('Delete ' + name + '? This cannot be undone.')) return;
+    const pass = prompt('Enter the admin passcode to confirm');
+    if (!pass) return;
+    try {
+      const res = await fetch(VERCEL_API_URL + '/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-passcode': pass },
+        body: JSON.stringify({ id: r._id })
+      });
+      if (res.status === 401) { toast('Wrong passcode', 'err'); return; }
+      if (res.status === 404) { toast('Record not found', 'err'); await load(); return; }
+      if (!res.ok) { toast('Could not delete', 'err'); return; }
+      toast('Record deleted');
+      await load();
+    } catch (err) {
+      toast('Could not reach the server', 'err');
+    }
+  }
+
+  /* ---------- Load ---------- */
+  async function load() {
+    try {
+      const res = await fetch(VERCEL_API_URL);
+      if (!res.ok) throw new Error('Request failed');
+      const data = await res.json();
+      setConn('ok');
+      if (!Array.isArray(data) || !data.length) {
+        rows = []; dates = []; shown = [];
+        countEl.textContent = '';
+        updateStats([]);
+        showState('No records yet', 'Attendance entries will appear here once they are added.');
+        return;
+      }
+      rows = data;
+      const all = [];
+      data.forEach(r => Object.keys(r).forEach(k => { if (k !== '_id' && k !== '__v' && !all.includes(k)) all.push(k); }));
+      attKey = all.find(k => data.some(r => Array.isArray(r[k]) && r[k].length && typeof r[k][0] === 'object')) || null;
+      const rank = k => /student/i.test(k) ? 0 : /subject/i.test(k) ? 1 : /section/i.test(k) ? 2 : 3;
+      infoCols = all.filter(k => k !== attKey).sort((a, b) => rank(a) - rank(b));
+      keys = {
+        student: infoCols.find(k => /student/i.test(k)) || null,
+        subject: infoCols.find(k => /subject/i.test(k)) || null,
+        section: infoCols.find(k => /section/i.test(k)) || null
+      };
+      const set = new Set();
+      data.forEach(r => getAtt(r).forEach(x => set.add(day(x.date))));
+      dates = Array.from(set).sort();
+      if (!sortKey || (!infoCols.includes(sortKey) && !sortKey.startsWith('d:') && sortKey !== '__rate')) {
+        sortKey = keys.student || infoCols[0] || null;
+        sortDir = 1;
+      }
+      fillFilter(subjEl, keys.subject, 'All subjects');
+      fillFilter(sectEl, keys.section, 'All sections');
+      buildForm();
+      render();
+    } catch (err) {
+      setConn('err');
+      countEl.textContent = '';
+      showState('Could not load records', 'Check your connection and try again. If it keeps happening, the API may be offline.', true);
+    }
+  }
+
+  searchEl.addEventListener('input', render);
+  subjEl.addEventListener('change', render);
+  sectEl.addEventListener('change', render);
+  $('exportBtn').addEventListener('click', () => { if (shown.length) exportCsv(); else toast('Nothing to export', 'err'); });
+
+  showSkeleton();
+  load();
+</script>
+</body>
+</html>
