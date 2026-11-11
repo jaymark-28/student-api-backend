@@ -1,41 +1,81 @@
-Attendance Management Portal
-A web portal for lab attendance. A teacher can add students with the dates they attended, see them in a list, fix a misspelled name or a wrong date, and delete wrong or duplicate records.
+# Attendance Management Portal
 
-Page: public/index.html (plain HTML, CSS and JavaScript, no build step)
-API: api/index.js, a Vercel serverless function at /api
-Database: MongoDB Atlas, database LabAttendanceDB_Bisquera, collection daily_attendance (the name is set in db.js, so it does not depend on what the connection string contains)
-Live site: https://bisquera-api-backend.vercel.app/
+A web-based Attendance Management Portal designed to help teachers manage student attendance records. It allows teachers to add students, view attendance records, update student information, and delete records.
 
-CRUD
-In the page	API call
-Create	Add student form: student name, section, subject and date	POST /api
-Read	Student list for the chosen class day, with search and section and subject filters	GET /api
-Update	Edit on a student: fix a misspelled name, section or subject, and change, add or remove dates. The check button marks a student present for the day.	PUT /api?id=… and PATCH /api?id=…
-Delete	Delete on a student, after a confirmation box	DELETE /api?id=…
-The page shows a message after every add, save and delete, and asks before it deletes anything.
+## Features
 
-API
-All routes are at /api. Records look like this:
+- **Create:** Add students with their name, section, subject, and attendance dates.
+- **Read:** Display student records and attendance information.
+- **Update:** Edit student names, sections, subjects, and attendance dates.
+- **Delete:** Remove student records after confirmation.
+- **Search:** Search and filter student records by section and subject.
 
-{ "_id": "…", "studentName": "Juan Dela Cruz", "section": "BSIT-3A", "subjectName": "Database 2",
-  "attendanceDates": ["2026-10-08T00:00:00.000Z"] }
-Method	What it does	Body	Success
-GET	All records	none	200 and a list
-POST	Add a student	{ studentName, section, subjectName, attendanceDates? }	201 and the new record
-PUT ?id=<_id>	Fix name, section or subject. If attendanceDates is sent it replaces the old list.	same as POST	200 and the record
-PATCH ?id=<_id>	Mark present on one day	{ "date": "YYYY-MM-DD" }	200 and the record
-DELETE ?id=<_id>	Delete the student and their dates	none	200 and { "deleted": true }
-attendanceDates is a list of days like ["2026-10-08", "2026-10-15"]. Errors: 400 bad input, 401 wrong or missing key, 404 no such record, 409 the same student is already listed for that section and subject, 503 the server has no WRITE_KEY.
+## Technologies Used
 
-Security
-The MongoDB connection string exists only as the Vercel environment variable MONGODB_URI. It is never in the page or in this repo (.env files are git-ignored).
-Anyone can read. Writes (POST, PUT, PATCH, DELETE) need the header x-api-key to match the WRITE_KEY environment variable. The teacher types the key once into the page (Teacher key), and it stays in that browser only.
-The server checks every input: required fields, maximum lengths, real calendar dates and valid ids. The page writes names with textContent, so a name can never inject HTML.
-Deploy on Vercel
-Push this repo to GitHub.
-In Vercel choose Add New, Project and import the repo. No build command is needed.
-Under Settings, Environment Variables add MONGODB_URI (the Atlas connection string mongodb+srv://… for a database user that can read and write LabAttendanceDB_Bisquera) and WRITE_KEY (a password of your choice). Redeploy afterwards.
-In Atlas, Network Access must allow Vercel. Its addresses change, so a class project usually allows 0.0.0.0/0.
-Every push to main deploys to production again.
-Tests
-npm test runs the API tests with the database stubbed out, so no connection string is needed.
+- HTML
+- CSS
+- JavaScript
+- Node.js
+- Express.js
+- MongoDB Atlas
+- Vercel
+
+## Project Structure
+
+```text
+student-api-backend/
+│
+├── public/
+│   └── index.html
+│
+├── api/
+│   └── index.js
+│
+├── package.json
+├── package-lock.json
+├── db.js
+├── .gitignore
+└── README.md
+```
+
+## CRUD Operations
+
+| Operation | Description |
+|---|---|
+| Create | Add a new student record |
+| Read | View student attendance records |
+| Update | Edit student information |
+| Delete | Delete student records |
+
+## API Endpoints
+
+All API routes are under `/api`.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api` | Retrieve all student records |
+| POST | `/api` | Add a new student |
+| PUT | `/api/:id` | Update student information |
+| PATCH | `/api/:id` | Update attendance date |
+| DELETE | `/api/:id` | Delete a student record |
+
+## Database
+
+The project uses **MongoDB Atlas** to store student information and attendance records.
+
+### Collection Fields
+
+- `studentName`
+- `section`
+- `subjectName`
+- `attendanceDates`
+
+## Deployment
+
+The application is deployed using Vercel.
+
+**Live Website:** Add your Vercel deployment link here.
+
+## Purpose
+
+This project was developed as part of an Enterprise System Migration activity to demonstrate database integration, backend API development, and frontend implementation.
